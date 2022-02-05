@@ -1,0 +1,35 @@
+version: 1.0.{build}
+image: Visual Studio 2019
+configuration:
+- Release
+platform:
+- x86
+- x64
+install:
+- cmd: git submodule -q update --init
+dotnet_csproj:
+  patch: true
+  file: '**\*.csproj'
+  version: '{version}'
+  package_version: '{version}'
+  assembly_version: '{version}'
+  file_version: '{version}'
+  informational_version: '{version}'
+before_build:
+- nuget restore
+skip_commits:
+  files:
+    - '**/*.md'
+build:
+  project: $(APPVEYOR_BUILD_FOLDER)\$(APPVEYOR_PROJECT_NAME).sln
+after_build:
+- cmd: 7z a %APPVEYOR_PROJECT_NAME%_%PLATFORM%-v%APPVEYOR_BUILD_VERSION%.zip "%APPVEYOR_BUILD_FOLDER%\bin\%PLATFORM%\*"
+artifacts:
+  - path: $(APPVEYOR_PROJECT_NAME)_$(PLATFORM)-*.zip
+test: off
+deploy:
+- provider: Environment
+  name: BUILDBOT
+  on:
+    branch: master
+    APPVEYOR_REPO_TAG: true
